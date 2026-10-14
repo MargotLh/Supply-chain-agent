@@ -1,0 +1,69 @@
+#%RAML 1.0
+# Contract for the Order System API - what you'd publish to Anypoint Exchange.
+# integration/api.py implements it; in a real deployment this would be a Mule app
+# with client-id enforcement and rate-limiting policies applied in API Manager.
+title: Order System API
+version: v1
+baseUri: https://integration.example.com/api/v1
+mediaType: application/json
+
+securitySchemes:
+  client-id-enforcement:
+    type: Pass Through
+    describedBy:
+      headers:
+        client_id: { type: string }
+        client_secret: { type: string }
+      responses:
+        401: { description: Invalid client credentials }
+
+securedBy: [client-id-enforcement]
+
+traits:
+  correlated:
+    headers:
+      x-correlation-id: { type: string, required: false, description: Propagated to the ERP for end-to-end tracing }
+
+/system:
+  /orders/{order_id}:
+    get:
+      is: [correlated]
+      description: Order in canonical form (customer, tier, sku, quantity, days_to_promise, status)
+    /actions:
+      post:
+        is: [correlated]
+        description: Record a remediation (REROUTE_WAREHOUSE | ALTERNATIVE_SUPPLIER | WAIT | HOLD)
+        body:
+          properties:
+            action: { type: string, enum: [REROUTE_WAREHOUSE, ALTERNATIVE_SUPPLIER, WAIT, HOLD] }
+            detail?: string
+            extra_cost_gbp?: number
+            approval_id?: string
+  /shipments/{order_id}:
+    get:
+      is: [correlated]
+  /inventory/{sku}:
+    get:
+      is: [correlated]
+  /suppliers/{sku}:
+    get:
+      is: [correlated]
+  /notifications:
+    post:
+      is: [correlated]
+      body:
+        properties:
+          text: string
+          channel?: string
+
+/events:
+  get:
+    description: ERP outbox events in canonical form (ORDER_DELAYED, ...)
+    queryParameters:
+      after?: { type: integer, description: Return events with sequence > after }
+
+/process:
+  /orders/{order_id}/context:
+    get:
+      is: [correlated]
+      description: Composed order + shipment view

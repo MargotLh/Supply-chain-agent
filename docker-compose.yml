@@ -1,0 +1,29 @@
+# Three services, mirroring the target architecture:
+#   mock-erp (legacy system)  <-  integration (MuleSoft stand-in)  <-  orchestrator (agents)
+services:
+  mock-erp:
+    build: .
+    command: uvicorn mock_erp.api:app --host 0.0.0.0 --port 8001
+    ports: ["8001:8001"]
+
+  integration:
+    build: .
+    command: uvicorn integration.api:app --host 0.0.0.0 --port 8002
+    environment:
+      ERP_URL: http://mock-erp:8001
+    ports: ["8002:8002"]
+    depends_on: [mock-erp]
+
+  orchestrator:
+    build: .
+    command: uvicorn service:app --host 0.0.0.0 --port 8000
+    environment:
+      INTEGRATION_URL: http://integration:8002
+      APPROVAL_THRESHOLD_GBP: "1000"
+      # Claude for the Decision Agent: passed through from your shell (or a .env file).
+      # Without a key the agent uses the rule-based scorer.
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      DECISION_MODE: ${DECISION_MODE:-auto}
+      LLM_MODEL: ${LLM_MODEL:-claude-opus-5-5}
+    ports: ["8000:8000"]
+    depends_on: [integration]

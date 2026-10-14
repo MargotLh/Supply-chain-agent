@@ -1,0 +1,97 @@
+{
+  "SYSTEM_DATE": "2026-10-14",
+  "orders": {
+    "1842": {
+      "ORD_NO": "1842",
+      "KUNNR": "C-100",
+      "CUST_NAME": "Northwind Retail",
+      "CUST_TIER": "PLATINUM",
+      "MATNR": "SKU-4471",
+      "MAKTX": "Industrial pump assembly",
+      "MENGE": 400,
+      "WERKS": "WH-A",
+      "PROMISED_DT": "2026-10-16",
+      "NETWR_GBP": 48000,
+      "STATUS": "IN_TRANSIT",
+      "ACTIONS": []
+    },
+    "1843": {
+      "ORD_NO": "1843",
+      "KUNNR": "C-205",
+      "CUST_NAME": "Contoso Manufacturing",
+      "CUST_TIER": "GOLD",
+      "MATNR": "SKU-9020",
+      "MAKTX": "Hydraulic valve kit",
+      "MENGE": 450,
+      "WERKS": "WH-A",
+      "PROMISED_DT": "2026-10-16",
+      "NETWR_GBP": 31500,
+      "STATUS": "IN_TRANSIT",
+      "ACTIONS": []
+    },
+    "1844": {
+      "ORD_NO": "1844",
+      "KUNNR": "C-310",
+      "CUST_NAME": "Fabrikam Foods",
+      "CUST_TIER": "GOLD",
+      "MATNR": "SKU-1203",
+      "MAKTX": "Conveyor belt segment",
+      "MENGE": 50,
+      "WERKS": "WH-B",
+      "PROMISED_DT": "2026-10-15",
+      "NETWR_GBP": 6200,
+      "STATUS": "IN_TRANSIT",
+      "ACTIONS": []
+    },
+    "1845": {
+      "ORD_NO": "1845",
+      "KUNNR": "C-412",
+      "CUST_NAME": "Tailspin Hardware",
+      "CUST_TIER": "STANDARD",
+      "MATNR": "SKU-5555",
+      "MAKTX": "Replacement bearing set",
+      "MENGE": 20,
+      "WERKS": "WH-A",
+      "PROMISED_DT": "2026-10-15",
+      "NETWR_GBP": 900,
+      "STATUS": "IN_TRANSIT",
+      "ACTIONS": []
+    }
+  },
+  "stock": {
+    "SKU-4471": [
+      {"WERKS": "WH-A", "WERKS_NAME": "Felixstowe DC", "LABST": 0,   "REROUTE_COST_GBP": 0,    "TRANSIT_D": 0},
+      {"WERKS": "WH-B", "WERKS_NAME": "Birmingham DC", "LABST": 420, "REROUTE_COST_GBP": 2400, "TRANSIT_D": 1},
+      {"WERKS": "WH-C", "WERKS_NAME": "Glasgow DC",    "LABST": 150, "REROUTE_COST_GBP": 3100, "TRANSIT_D": 2}
+    ],
+    "SKU-9020": [
+      {"WERKS": "WH-A", "WERKS_NAME": "Felixstowe DC", "LABST": 0,   "REROUTE_COST_GBP": 0,    "TRANSIT_D": 0},
+      {"WERKS": "WH-C", "WERKS_NAME": "Glasgow DC",    "LABST": 100, "REROUTE_COST_GBP": 1400, "TRANSIT_D": 2}
+    ],
+    "SKU-1203": [
+      {"WERKS": "WH-B", "WERKS_NAME": "Birmingham DC", "LABST": 0,   "REROUTE_COST_GBP": 0,    "TRANSIT_D": 0},
+      {"WERKS": "WH-C", "WERKS_NAME": "Glasgow DC",    "LABST": 80,  "REROUTE_COST_GBP": 350,  "TRANSIT_D": 1}
+    ],
+    "SKU-5555": [
+      {"WERKS": "WH-A", "WERKS_NAME": "Felixstowe DC", "LABST": 0,   "REROUTE_COST_GBP": 0,    "TRANSIT_D": 0},
+      {"WERKS": "WH-B", "WERKS_NAME": "Birmingham DC", "LABST": 60,  "REROUTE_COST_GBP": 600,  "TRANSIT_D": 2}
+    ]
+  },
+  "vendors": {
+    "SKU-4471": [
+      {"LIFNR": "V-110", "NAME1": "Supplier D", "AVAIL_QTY": 1000, "LEAD_TIME_D": 6, "EXTRA_COST_GBP": 1200}
+    ],
+    "SKU-9020": [
+      {"LIFNR": "V-200", "NAME1": "Supplier B", "AVAIL_QTY": 500, "LEAD_TIME_D": 2, "EXTRA_COST_GBP": 1800},
+      {"LIFNR": "V-201", "NAME1": "Supplier C", "AVAIL_QTY": 300, "LEAD_TIME_D": 5, "EXTRA_COST_GBP": 900}
+    ],
+    "SKU-1203": [],
+    "SKU-5555": []
+  },
+  "shipments": {
+    "1842": {"TKNUM": "SHP-77812", "CARRIER": "DHL Freight",   "ORIG_ETA": "2026-10-16", "CURR_ETA": "2026-10-16", "DELAY_RSN": ""},
+    "1843": {"TKNUM": "SHP-77813", "CARRIER": "Maersk",        "ORIG_ETA": "2026-10-16", "CURR_ETA": "2026-10-16", "DELAY_RSN": ""},
+    "1844": {"TKNUM": "SHP-77814", "CARRIER": "DPD",           "ORIG_ETA": "2026-10-15", "CURR_ETA": "2026-10-15", "DELAY_RSN": ""},
+    "1845": {"TKNUM": "SHP-77815", "CARRIER": "Royal Mail",    "ORIG_ETA": "2026-10-15", "CURR_ETA": "2026-10-15", "DELAY_RSN": ""}
+  }
+}
