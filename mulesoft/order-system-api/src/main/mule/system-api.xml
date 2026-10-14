@@ -1,0 +1,130 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- System API: one flow per ERP resource. Each one applies the policies, calls the ERP,
+     and maps the SAP-style answer to the canonical model (modules/Canonical.dwl). -->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+    <!-- GET /api/v1/system/orders/{order_id} -->
+    <flow name="get-order">
+        <http:listener config-ref="api-listener" path="/api/v1/system/orders/{order_id}" allowedMethods="GET">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <set-variable variableName="orderId" value="#[attributes.uriParams.order_id]"/>
+        <flow-ref name="erp-order"/>
+    </flow>
+
+    <!-- GET /api/v1/system/shipments/{order_id} -->
+    <flow name="get-shipment">
+        <http:listener config-ref="api-listener" path="/api/v1/system/shipments/{order_id}" allowedMethods="GET">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <set-variable variableName="orderId" value="#[attributes.uriParams.order_id]"/>
+        <flow-ref name="erp-shipment"/>
+    </flow>
+
+    <!-- GET /api/v1/system/inventory/{sku} -->
+    <flow name="get-inventory">
+        <http:listener config-ref="api-listener" path="/api/v1/system/inventory/{sku}" allowedMethods="GET">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <http:request config-ref="erp" method="GET" path="/erp/stock">
+            <http:query-params>#[{matnr: attributes.uriParams.sku}]</http:query-params>
+        </http:request>
+        <set-payload value="#[output application/json --- modules::Canonical::inventory(payload)]"/>
+    </flow>
+
+    <!-- GET /api/v1/system/suppliers/{sku} -->
+    <flow name="get-suppliers">
+        <http:listener config-ref="api-listener" path="/api/v1/system/suppliers/{sku}" allowedMethods="GET">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <http:request config-ref="erp" method="GET" path="/erp/vendors">
+            <http:query-params>#[{matnr: attributes.uriParams.sku}]</http:query-params>
+        </http:request>
+        <set-payload value="#[output application/json --- modules::Canonical::suppliers(payload)]"/>
+    </flow>
+
+    <!-- POST /api/v1/system/orders/{order_id}/actions  (the only write to the ERP's orders) -->
+    <flow name="post-order-action">
+        <http:listener config-ref="api-listener" path="/api/v1/system/orders/{order_id}/actions" allowedMethods="POST">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <set-variable variableName="orderId" value="#[attributes.uriParams.order_id]"/>
+        <set-payload value="#[output application/json --- modules::Canonical::erpAction(payload, vars.correlationId)]"/>
+        <http:request config-ref="erp" method="POST" path="/erp/orders/{ord_no}/actions">
+            <http:uri-params>#[{ord_no: vars.orderId}]</http:uri-params>
+        </http:request>
+        <set-payload value="#[output application/json --- {order_id: payload.ORD_NO, status: payload.STATUS}]"/>
+    </flow>
+
+    <!-- POST /api/v1/system/notifications -->
+    <flow name="post-notification">
+        <http:listener config-ref="api-listener" path="/api/v1/system/notifications" allowedMethods="POST">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <set-payload value="#[output application/json --- modules::Canonical::erpMessage(payload, vars.correlationId)]"/>
+        <http:request config-ref="erp" method="POST" path="/erp/messages"/>
+        <set-payload value="#[output application/json --- {message_id: payload.MSG_ID, channel: payload.CHANNEL, delivered: true}]"/>
+    </flow>
+
+    <!-- Reusable ERP lookups (also used by the Process API). They read vars.orderId. -->
+    <sub-flow name="erp-order">
+        <http:request config-ref="erp" method="GET" path="/erp/orders/{ord_no}">
+            <http:uri-params>#[{ord_no: vars.orderId}]</http:uri-params>
+        </http:request>
+        <set-payload value="#[output application/json --- modules::Canonical::order(payload)]"/>
+    </sub-flow>
+
+    <sub-flow name="erp-shipment">
+        <http:request config-ref="erp" method="GET" path="/erp/shipments/{ord_no}">
+            <http:uri-params>#[{ord_no: vars.orderId}]</http:uri-params>
+        </http:request>
+        <set-payload value="#[output application/json --- modules::Canonical::shipment(payload)]"/>
+    </sub-flow>
+</mule>

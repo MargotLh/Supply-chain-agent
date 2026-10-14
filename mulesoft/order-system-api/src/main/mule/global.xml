@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Shared configuration: HTTP listener/requester, properties, policies, error handling. -->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+    <configuration-properties file="config.yaml"/>
+
+    <!-- Every flow without its own handler uses api-error-handler. -->
+    <configuration defaultErrorHandler-ref="api-error-handler"/>
+
+    <!-- Inbound: what the agents' tools call (INTEGRATION_URL). -->
+    <http:listener-config name="api-listener">
+        <http:listener-connection host="0.0.0.0" port="${http.port}"/>
+    </http:listener-config>
+
+    <!-- Outbound: the legacy ERP. -->
+    <http:request-config name="erp">
+        <http:request-connection protocol="${erp.protocol}" host="${erp.host}" port="${erp.port}"/>
+    </http:request-config>
+
+    <!-- Policies applied at the start of every flow.
+         On Anypoint Platform, client-id enforcement would be an API Manager policy instead. -->
+    <sub-flow name="apply-policies">
+        <set-variable variableName="correlationId"
+                      value="#[attributes.headers.'x-correlation-id' default uuid()]"/>
+        <logger level="INFO" message='#["$(attributes.method) $(attributes.requestPath) cid=$(vars.correlationId)"]'/>
+        <choice>
+            <when expression="#[attributes.headers.client_id != p('client.id') or attributes.headers.client_secret != p('client.secret')]">
+                <raise-error type="APP:UNAUTHORIZED" description="Invalid client credentials"/>
+            </when>
+        </choice>
+    </sub-flow>
+
+    <!-- Errors come back as {"detail": ...}, the same shape as the Python stand-in (FastAPI). -->
+    <error-handler name="api-error-handler">
+        <on-error-propagate type="APP:UNAUTHORIZED">
+            <set-variable variableName="httpStatus" value="401"/>
+            <set-payload value='#[output application/json --- {detail: error.description}]'/>
+        </on-error-propagate>
+        <on-error-propagate type="HTTP:NOT_FOUND">
+            <set-variable variableName="httpStatus" value="404"/>
+            <set-payload value='#[output application/json --- {detail: error.errorMessage.payload.detail default "Not found"}]'/>
+        </on-error-propagate>
+        <on-error-propagate type="ANY">
+            <set-variable variableName="httpStatus" value="502"/>
+            <set-payload value='#[output application/json --- {detail: error.description}]'/>
+        </on-error-propagate>
+    </error-handler>
+</mule>

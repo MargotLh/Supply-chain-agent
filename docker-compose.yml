@@ -14,11 +14,19 @@ services:
     ports: ["8002:8002"]
     depends_on: [mock-erp]
 
+  # Real MuleSoft: the Mule app in mulesoft/, same contract as `integration`.
+  # INTEGRATION_URL=http://mulesoft:8081 docker compose --profile mulesoft up --build
+  mulesoft:
+    build: ./mulesoft
+    profiles: [mulesoft]
+    ports: ["8081:8081"]
+    depends_on: [mock-erp]
+
   orchestrator:
     build: .
     command: uvicorn service:app --host 0.0.0.0 --port 8000
     environment:
-      INTEGRATION_URL: http://integration:8002
+      INTEGRATION_URL: ${INTEGRATION_URL:-http://integration:8002}
       APPROVAL_THRESHOLD_GBP: "1000"
       # Claude for the Decision Agent: passed through from your shell (or a .env file).
       # Without a key the agent uses the rule-based scorer.

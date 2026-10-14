@@ -78,7 +78,7 @@ Layer by layer:
 | Governance | `governance/` | Role permissions, approval policy, approval tickets, audit trail. |
 | MCP | `mcp_server/server.py` | Exposes the same tools to any MCP client, under the same governance. |
 | Tools | `tools/` | Thin typed functions. They only know the integration layer. |
-| Integration | `integration/` | MuleSoft stand-in: System/Process/Event APIs, canonical model, client-id policy, correlation IDs. Contract in `order-system-api.raml`. |
+| Integration | `integration/`, `mulesoft/` | System/Process/Event APIs, canonical model, client-id policy, correlation IDs. Contract in `order-system-api.raml`. Two interchangeable implementations: a Python stand-in and a real Mule 4 app. |
 | System of record | `mock_erp/` | In-memory ERP seeded from `data.json`. |
 
 ## Agents
@@ -190,7 +190,13 @@ Agent → ToolGateway → tool → Integration layer (MuleSoft) → legacy ERP
 - **Policies.** Client-id enforcement (`client_id` / `client_secret` headers, 401 without them) and correlation-ID propagation. Each workflow's run ID flows all the way into the ERP action record.
 - **Contract.** `integration/order-system-api.raml` is what you'd publish to Anypoint Exchange.
 
-To use real MuleSoft, point `INTEGRATION_URL` at the Mule app implementing that RAML. Nothing else changes.
+**Real MuleSoft.** `mulesoft/order-system-api/` is a Mule 4 app implementing the same RAML: the same flows, policies and mappings, written in Mule XML and DataWeave. Point `INTEGRATION_URL` at it and nothing else changes. All four demo scenarios give the same results through either implementation. Run it with Docker, with no MuleSoft account needed:
+
+```bash
+INTEGRATION_URL=http://mulesoft:8081 docker compose --profile mulesoft up --build
+```
+
+See [`mulesoft/README.md`](mulesoft/README.md) for Anypoint Code Builder and CloudHub.
 
 ## Human-in-the-loop
 
@@ -274,6 +280,7 @@ The suite covers workflow branches, the approval and rejection paths, permission
 agents/          orchestrator, inventory, supplier, decision, execution agents
 tools/           tool functions + registry + integration-layer client
 integration/     MuleSoft stand-in (System/Process/Event APIs) + RAML contract
+mulesoft/        real Mule 4 app implementing the same contract (+ Dockerfile)
 mcp_server/      MCP server exposing the tools
 mock_erp/        legacy ERP/TMS API + seed data
 events/          ORDER_DELAYED schema, event bus, outbox listener
