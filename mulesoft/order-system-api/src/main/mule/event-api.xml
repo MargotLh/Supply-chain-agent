@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- Event API: exposes the ERP's transactional outbox as canonical events.
+     The orchestrator's OutboxListener polls this to start workflows. -->
+<mule xmlns="http://www.mulesoft.org/schema/mule/core"
+      xmlns:http="http://www.mulesoft.org/schema/mule/http"
+      xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+      xsi:schemaLocation="
+        http://www.mulesoft.org/schema/mule/core http://www.mulesoft.org/schema/mule/core/current/mule.xsd
+        http://www.mulesoft.org/schema/mule/http http://www.mulesoft.org/schema/mule/http/current/mule-http.xsd">
+
+    <!-- GET /api/v1/events?after=N -->
+    <flow name="get-events">
+        <http:listener config-ref="api-listener" path="/api/v1/events" allowedMethods="GET">
+            <http:response statusCode="200">
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:response>
+            <http:error-response statusCode="#[vars.httpStatus default 500]">
+                <http:body>#[payload]</http:body>
+                <http:headers>#[{'x-correlation-id': vars.correlationId}]</http:headers>
+            </http:error-response>
+        </http:listener>
+        <flow-ref name="apply-policies"/>
+        <http:request config-ref="erp" method="GET" path="/erp/outbox">
+            <http:query-params>#[{after: attributes.queryParams.after default "0"}]</http:query-params>
+        </http:request>
+        <set-payload value="#[output application/json --- modules::Canonical::events(payload)]"/>
+    </flow>
+</mule>

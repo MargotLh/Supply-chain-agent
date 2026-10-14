@@ -1,0 +1,15 @@
+# Default properties. Override at deploy time (Runtime Manager > Properties, or -M-D flags).
+http:
+  port: "8081"
+
+# Where the legacy ERP lives (mock_erp/api.py).
+erp:
+  protocol: "HTTP"
+  host: "localhost"
+  port: "8001"
+
+# Client-id enforcement. Must match INTEGRATION_CLIENT_ID / _SECRET in settings.py.
+# In production, use secure properties or an API Manager policy instead of plain text.
+client:
+  id: "agent-orchestrator"
+  secret: "local-dev-secret"
